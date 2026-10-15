@@ -100,6 +100,8 @@ from pathlib import Path
 
 import requests
 
+from speech_lock import speaking
+
 try:
     import pyttsx3
 except ImportError:
@@ -692,7 +694,8 @@ def run_coach(args) -> None:
         template = random.choice(options) if args.vary else options[0]
         text = template.format(name=name, **ctx)
         print(f"  min {minute:>3}  -> {key.upper()}")
-        coach_speak(text, COACH_ALERTS[key][1], args.lang, args.dry_run, engine_holder)
+        with speaking():  # never talk over the Polar coach (backend/speech_lock.py)
+            coach_speak(text, COACH_ALERTS[key][1], args.lang, args.dry_run, engine_holder)
         log_alert(sample, key, ctx, text)
 
 
