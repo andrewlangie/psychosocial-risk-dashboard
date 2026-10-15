@@ -74,8 +74,58 @@ def simulated_events(seed=7, start_t=0.0):
         yield ("beat", t_beat, 60000 / rr, rr)
 
 
+# What really happens in each phase -- used as labels.csv by --save (for evaluate_rules.py)
+SIM_LABELS = [
+    ("0:00", "5:00", "posture", "good", ""),
+    ("5:00", "8:00", "posture", "poor", "forward_bending"),
+    ("8:00", "10:00", "posture", "critical", "forward_bending"),
+    ("10:00", "12:00", "posture", "good", ""),
+    ("12:00", "15:00", "posture", "poor", "side_bending"),
+    ("15:00", "41:00", "posture", "good", ""),
+    ("41:00", "46:00", "posture", "poor", "static_posture"),
+    ("46:00", "48:00", "posture", "critical", "static_posture"),
+    ("48:00", "50:00", "posture", "good", ""),
+    ("0:00", "15:00", "fatigue", "low", ""),
+    ("15:00", "22:00", "fatigue", "medium", "cardiovascular"),
+    ("22:00", "27:00", "fatigue", "high", "prolonged_exertion"),
+    ("27:00", "31:00", "fatigue", "very_high", "prolonged_exertion"),
+    ("31:00", "50:00", "fatigue", "low", ""),
+]
+
+
+def save(folder, seed=7):
+    """Write the simulated shift as a recording (hr.csv, acc.csv) plus labels.csv."""
+    import csv
+    from pathlib import Path
+
+    folder = Path(folder)
+    folder.mkdir(parents=True, exist_ok=True)
+    with open(folder / "hr.csv", "w", newline="") as fh, open(folder / "acc.csv", "w", newline="") as fa:
+        hw, aw = csv.writer(fh), csv.writer(fa)
+        hw.writerow(["t", "hr", "rr_ms"])
+        aw.writerow(["t", "ax", "ay", "az"])
+        for ev in simulated_events(seed=seed):
+            if ev[0] == "beat":
+                hw.writerow([f"{ev[1]:.3f}", f"{ev[2]:.0f}", f"{ev[3]:.1f}"])
+            else:
+                aw.writerow([f"{ev[1]:.3f}", f"{ev[2]:.4f}", f"{ev[3]:.4f}", f"{ev[4]:.4f}"])
+    with open(folder / "labels.csv", "w", newline="") as fl:
+        w = csv.writer(fl)
+        w.writerow(["start", "end", "track", "label", "cause"])
+        w.writerows(SIM_LABELS)
+    print(f"Saved simulated recording + labels.csv to {folder}/")
+
+
 if __name__ == "__main__":
-    n = sum(1 for _ in simulated_events())
-    print(f"{n} simulated events over {PHASES[-1][1]} minutes")
-    for p in PHASES:
-        print(f"  {p[0]:>2}-{p[1]:<2} min  {p[8]}")
+    import argparse
+
+    ap = argparse.ArgumentParser(description="Simulated Polar H10 shift")
+    ap.add_argument("--save", metavar="FOLDER", help="write hr.csv, acc.csv and labels.csv to FOLDER")
+    args = ap.parse_args()
+    if args.save:
+        save(args.save)
+    else:
+        n = sum(1 for _ in simulated_events())
+        print(f"{n} simulated events over {PHASES[-1][1]} minutes")
+        for p in PHASES:
+            print(f"  {p[0]:>2}-{p[1]:<2} min  {p[8]}")
