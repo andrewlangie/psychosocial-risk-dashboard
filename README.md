@@ -64,7 +64,7 @@ works without AWS.
 ### 1. Live wristband poller (terminal 1, needs AWS)
 
 ```bash
-python avro_stream_poller_with_ml.py
+python backend/avro_stream_poller_with_ml.py
 ```
 
 Serves the latest sample + predictions at `http://127.0.0.1:7000/latest`.
@@ -72,7 +72,7 @@ Serves the latest sample + predictions at `http://127.0.0.1:7000/latest`.
 ### 2. Dashboard (terminal 2)
 
 ```bash
-python serve_dashboard.py
+python backend/serve_dashboard.py
 ```
 
 Open `http://127.0.0.1:8000/psychosocial_dashboard.html`. Without the poller it still shows
@@ -97,12 +97,12 @@ window. Source is in `sensor/`; the built bundle is `assets/polar-panel.js`.
 
 ```bash
 # Try it without any hardware:
-python speak_biomarker_labels.py --simulate --dry-run --speed 0   # instant, text only
-python speak_biomarker_labels.py --simulate                       # 70-min shift, spoken
+python backend/speak_biomarker_labels.py --simulate --dry-run --speed 0   # instant, text only
+python backend/speak_biomarker_labels.py --simulate                       # 70-min shift, spoken
 
 # Live, with the poller running:
-python speak_biomarker_labels.py            # announces Frustration / Mental Demand changes
-python speak_biomarker_labels.py --coach    # escalating coaching messages
+python backend/speak_biomarker_labels.py            # announces Frustration / Mental Demand changes
+python backend/speak_biomarker_labels.py --coach    # escalating coaching messages
 ```
 
 | Option | Meaning |
@@ -124,6 +124,8 @@ Coach messages, thresholds and cooldowns are in `COACH_MESSAGES` / `COACH_CONFIG
 
 ## Repository layout
 
+Run every script from the project root, e.g. `python backend/serve_dashboard.py`.
+
 ```text
 backend/                        Python
   avro_stream_poller_with_ml.py   Live S3 poller + ML prediction API (port 7000)
@@ -139,8 +141,6 @@ frontend/                       The only folder the server publishes
 models/                         frustration_model.joblib, mental_demand_model.joblib, model_metadata.json
 dashboard_data.json             Historical example sessions (16 MB)
 biomarker_data/                 Downloaded wristband CSVs (participant data)
-serve_dashboard.py  speak_biomarker_labels.py  avro_stream_poller_with_ml.py
-train_biomarker_models.py       Launchers: the old commands still work from the project root
 ```
 
 ---
