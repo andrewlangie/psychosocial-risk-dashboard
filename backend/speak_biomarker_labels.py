@@ -89,11 +89,14 @@ import time
 from typing import Optional
 
 # Added for voice coach mode
+import asyncio
 import csv
+import os
 import platform
 import random
 import shutil
 import subprocess
+import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -127,9 +130,7 @@ def build_tts_engine(rate: int = 175, volume: float = 1.0) -> "pyttsx3.Engine":
 
 def speak(engine: "pyttsx3.Engine", text: str) -> None:
     """Speak text aloud and wait until finished before returning."""
-    print(f"[speaking] {text}")
-    engine.say(text)
-    engine.runAndWait()
+    coach_speak(text, "calm", "en", False, {})  # same voice as the coaches
 
 
 def fetch_latest(endpoint: str) -> Optional[dict]:
@@ -380,7 +381,15 @@ COACH_ALERTS = {
     "hydration": (10, "calm"),
 }
 
-# macOS voices (run `say -v '?'` to see what's installed).
+# Microsoft Edge neural voices (natural sounding, need internet). Voice choice from
+# Dean's dean_tts work. List all voices: python -m edge_tts --list-voices
+# Set COACH_VOICE=system to always use the offline voices below instead.
+EDGE_VOICES = {
+    "en": {"calm": "en-US-AvaNeural", "firm": "en-US-AndrewNeural"},
+    "es": {"calm": "es-MX-DaliaNeural", "firm": "es-MX-JorgeNeural"},
+}
+
+# Offline fallback: macOS voices (run `say -v '?'` to see what's installed).
 COACH_VOICES = {
     "en": {"calm": "Samantha", "firm": "Daniel"},
     "es": {"calm": "Paulina", "firm": "Jorge"},
@@ -539,6 +548,44 @@ class VoiceCoach:
         return key, ctx
 
 
+_edge_ok = os.environ.get("COACH_VOICE", "edge").lower() != "system"
+
+
+def _play_mp3(path: str) -> None:
+    """Play an mp3 and wait until it finishes (macOS afplay, Windows MCI, Linux ffplay/mpg123)."""
+    system = platform.system()
+    if system == "Darwin":
+        subprocess.run(["afplay", path], check=True)
+    elif system == "Windows":
+        import ctypes
+        mci = ctypes.windll.winmm.mciSendStringW
+        mci(f'open "{path}" type mpegvideo alias coachaudio', None, 0, None)
+        mci("play coachaudio wait", None, 0, None)
+        mci("close coachaudio", None, 0, None)
+    elif shutil.which("ffplay"):
+        subprocess.run(["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", path], check=True)
+    elif shutil.which("mpg123"):
+        subprocess.run(["mpg123", "-q", path], check=True)
+    else:
+        raise RuntimeError("no mp3 player found (install ffmpeg or mpg123)")
+
+
+def speak_edge(text: str, lang: str, tone: str, rate: int = 175) -> None:
+    """Speak with a Microsoft neural voice. Raises if edge-tts is missing or offline."""
+    import edge_tts
+
+    voice = EDGE_VOICES.get(lang, EDGE_VOICES["en"])[tone]
+    pct = round((rate - 175) / 175 * 100)  # pyttsx3-style words/min -> edge-tts percent
+    fd, path = tempfile.mkstemp(suffix=".mp3")
+    os.close(fd)
+    try:
+        communicate = edge_tts.Communicate(text, voice, rate=f"{pct:+d}%", connect_timeout=5)
+        asyncio.run(asyncio.wait_for(communicate.save(path), timeout=15))
+        _play_mp3(path)
+    finally:
+        os.remove(path)
+
+
 def speak_isolated(text: str, rate: int = 175) -> None:
     """Speak via a throwaway process so pyttsx3 can't get stuck after the first utterance."""
     print(f"[speaking] {text}", flush=True)
@@ -553,10 +600,20 @@ def speak_isolated(text: str, rate: int = 175) -> None:
 
 
 def coach_speak(text, tone, lang, dry_run, engine_holder, rate=175):
-    """Speak with a calm/firm macOS voice if available, else the original pyttsx3 speak()."""
+    """Speak with a Microsoft neural voice; offline, fall back to macOS `say`, else pyttsx3."""
+    global _edge_ok
     if dry_run:
         print(f"[speaking:{tone}] {text}", flush=True)
         return
+    if _edge_ok:
+        try:
+            print(f"[speaking:{tone}] {text}", flush=True)
+            speak_edge(text, lang, tone, rate)
+            return
+        except Exception as exc:  # no internet, edge-tts not installed, no player...
+            _edge_ok = False  # don't wait on the network again this session
+            print(f"(neural voice unavailable: {type(exc).__name__}: {exc} -- using offline voice)",
+                  file=sys.stderr, flush=True)
     if platform.system() == "Darwin" and shutil.which("say"):
         print(f"[speaking:{tone}] {text}", flush=True)
         voice = COACH_VOICES.get(lang, COACH_VOICES["en"]).get(tone)
