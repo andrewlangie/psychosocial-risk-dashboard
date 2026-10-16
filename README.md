@@ -125,21 +125,23 @@ Coach messages, thresholds and cooldowns are in `COACH_MESSAGES` / `COACH_CONFIG
 ## Repository layout
 
 ```text
-avro_stream_poller_with_ml.py   Live S3 poller + ML prediction API (port 7000)
-biomarker_runtime.py            Loads the models, builds features, predicts per minute
-train_biomarker_models.py       Retrains the models: --dataset <folder|zip> --outdir models
-serve_dashboard.py              Dashboard web server + /api/dashboard-data (port 8000)
-live_dashboard_backend.py       Merges the live worker into the dashboard data
-build_dashboard.py              Original generator for the historical dashboard data/page
-speak_biomarker_labels.py       Voice coach
-psychosocial_dashboard.html     Dashboard (current)   psychosocial_dashboard_v2.html  (variant)
-sensor/  assets/                Polar H10 panel (source / built bundle)
+backend/                        Python
+  avro_stream_poller_with_ml.py   Live S3 poller + ML prediction API (port 7000)
+  biomarker_runtime.py            Loads the models, builds features, predicts per minute
+  train_biomarker_models.py       Retrains the models: --dataset <folder|zip> --outdir models
+  serve_dashboard.py              Dashboard web server + /api/... routes (port 8000)
+  live_dashboard_backend.py       Merges the live worker into the dashboard data
+  build_dashboard.py              Original generator for the historical dashboard data/page
+  speak_biomarker_labels.py       Voice coach
+frontend/                       The only folder the server publishes
+  psychosocial_dashboard.html     Dashboard (current)   psychosocial_dashboard_v2.html (variant)
+  sensor/  assets/                Polar H10 panel (source / built bundle)
 models/                         frustration_model.joblib, mental_demand_model.joblib, model_metadata.json
 dashboard_data.json             Historical example sessions (16 MB)
 biomarker_data/                 Downloaded wristband CSVs (participant data)
+serve_dashboard.py  speak_biomarker_labels.py  avro_stream_poller_with_ml.py
+train_biomarker_models.py       Launchers: the old commands still work from the project root
 ```
-
-A move to `backend/` + `frontend/` folders is planned (see [Roadmap](#roadmap)).
 
 ---
 
@@ -191,7 +193,7 @@ A move to `backend/` + `frontend/` folders is planned (see [Roadmap](#roadmap)).
 
 | Item | Owner | Branch |
 |---|---|---|
-| Restructure into `backend/` (Python) and `frontend/` (pages); server only publishes `frontend/` | Polar / fatigue team | `restructure-backend-frontend` |
+| Restructure into `backend/` (Python) and `frontend/` (pages); server only publishes `frontend/` | Polar / fatigue team | done (`restructure-backend-frontend`) |
 | Polar H10 fatigue (HR, RMSSD, SDNN) and posture (accelerometer angles) voice feedback | Polar / fatigue team | `feature/polar-fatigue-posture` |
 | Microsoft Edge neural TTS voices | Dean | `dean_tts` (work in progress) |
 | Cause-aware stress / frustration decision engine (Level 1–4), worker phone page | Stress / frustration team | to be ported |
