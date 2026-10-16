@@ -37,7 +37,7 @@ git clone https://github.com/andrewlangie/psychosocial-risk-dashboard.git
 cd psychosocial-risk-dashboard
 python3 -m venv .venv
 source .venv/bin/activate            # Windows: .venv\Scripts\activate
-pip install pandas numpy scikit-learn==1.8.0 joblib flask boto3 requests pyttsx3
+pip install pandas numpy scikit-learn==1.8.0 joblib flask boto3 requests pyttsx3 edge-tts
 ```
 
 - `scikit-learn==1.8.0` is the version the saved models in `models/` load with.
@@ -116,6 +116,14 @@ python backend/speak_biomarker_labels.py --coach    # escalating coaching messag
 | `--worker-name NAME` | Personalise messages ("…, Carlos") |
 | `--vary` | Rotate through alternative phrasings |
 | `--endpoint URL`, `--interval S`, `--debug` | Poller URL, polling interval, print raw payloads |
+
+**Voice.** All coaches (stress, fatigue, posture) speak through `coach_speak()` with
+natural Microsoft neural voices — `en-US-AriaNeural` (calm) and `en-US-GuyNeural` (firm),
+Spanish `es-MX-DaliaNeural` / `es-MX-JorgeNeural` — via `edge-tts` (free, needs internet).
+Offline it switches automatically to the macOS voices Samantha / Daniel (or pyttsx3 on
+Windows/Linux). Change voices in `EDGE_VOICES` (list them: `python -m edge_tts --list-voices`);
+force the offline voices with `COACH_VOICE=system python backend/...`. Linux needs `ffmpeg`
+or `mpg123` to play the audio.
 
 Coach messages, thresholds and cooldowns are in `COACH_MESSAGES` / `COACH_CONFIG` in
 `speak_biomarker_labels.py`. Every coach alert is logged to `voice_alert_log.csv`
@@ -255,7 +263,7 @@ biomarker_data/                 Downloaded wristband CSVs (participant data)
 |---|---|---|
 | Restructure into `backend/` (Python) and `frontend/` (pages); server only publishes `frontend/` | Polar / fatigue team | done (`restructure-backend-frontend`) |
 | Polar H10 fatigue (HR, RMSSD, SDNN) and posture (accelerometer angles) voice feedback | Polar / fatigue team | done (`feature/fatigue-posture`) |
-| Microsoft Edge neural TTS voices | Dean | `dean_tts` (work in progress) |
+| Microsoft Edge neural TTS voices (builds on Dean's `dean_tts` work) | Dean / Polar team | done (`feature/edge-tts-voice`) |
 | Cause-aware stress / frustration decision engine (Level 1–4), worker phone page | Stress / frustration team | to be ported |
 | Dashboard panel for fatigue and posture | Polar / fatigue team | done (`feature/fatigue-posture-dashboard`) |
 
