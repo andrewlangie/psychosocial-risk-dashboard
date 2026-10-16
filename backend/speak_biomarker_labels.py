@@ -385,7 +385,7 @@ COACH_ALERTS = {
 # Dean's dean_tts work. List all voices: python -m edge_tts --list-voices
 # Set COACH_VOICE=system to always use the offline voices below instead.
 EDGE_VOICES = {
-    "en": {"calm": "en-US-AriaNeural", "firm": "en-US-GuyNeural"},
+    "en": {"calm": "en-US-AvaNeural", "firm": "en-US-AndrewNeural"},
     "es": {"calm": "es-MX-DaliaNeural", "firm": "es-MX-JorgeNeural"},
 }
 

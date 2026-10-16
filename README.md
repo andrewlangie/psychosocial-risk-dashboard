@@ -118,7 +118,7 @@ python backend/speak_biomarker_labels.py --coach    # escalating coaching messag
 | `--endpoint URL`, `--interval S`, `--debug` | Poller URL, polling interval, print raw payloads |
 
 **Voice.** All coaches (stress, fatigue, posture) speak through `coach_speak()` with
-natural Microsoft neural voices — `en-US-AriaNeural` (calm) and `en-US-GuyNeural` (firm),
+natural Microsoft neural voices — `en-US-AvaNeural` (calm) and `en-US-AndrewNeural` (firm),
 Spanish `es-MX-DaliaNeural` / `es-MX-JorgeNeural` — via `edge-tts` (free, needs internet).
 Offline it switches automatically to the macOS voices Samantha / Daniel (or pyttsx3 on
 Windows/Linux). Change voices in `EDGE_VOICES` (list them: `python -m edge_tts --list-voices`);

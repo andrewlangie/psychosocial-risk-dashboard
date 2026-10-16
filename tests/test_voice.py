@@ -35,7 +35,7 @@ class VoiceTests(unittest.TestCase):
              contextlib.redirect_stdout(io.StringIO()):
             sbl.coach_speak("Take a break.", "firm", "en", False, {})
             sbl.coach_speak("Tome un descanso.", "calm", "es", False, {})
-        self.assertEqual(FakeCommunicate.calls[0], ("Take a break.", "en-US-GuyNeural", "+0%"))
+        self.assertEqual(FakeCommunicate.calls[0], ("Take a break.", "en-US-AndrewNeural", "+0%"))
         self.assertEqual(FakeCommunicate.calls[1][1], "es-MX-DaliaNeural")
         self.assertEqual(play.call_count, 2)
 
