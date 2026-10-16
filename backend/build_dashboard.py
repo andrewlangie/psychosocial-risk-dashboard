@@ -11,9 +11,9 @@ from statistics import mean
 
 import pandas as pd
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent  # project root
 ZIP_PATH = Path('/mnt/data/OneDrive_1_4-8-2026(1).zip')
-OUTPUT_HTML = BASE_DIR / 'psychosocial_dashboard.html'
+OUTPUT_HTML = BASE_DIR / 'frontend' / 'psychosocial_dashboard.html'
 OUTPUT_JSON = BASE_DIR / 'dashboard_data.json'
 README = BASE_DIR / 'README.md'
 SERVE = BASE_DIR / 'serve_dashboard.py'

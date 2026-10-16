@@ -18,10 +18,11 @@ POLL_SECONDS = 30
 
 FORCE_DOWNLOAD_EVERY_POLL = True
 
-LOCAL_BIOMARKER_DIR = os.path.join(os.path.dirname(__file__), "biomarker_data")
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LOCAL_BIOMARKER_DIR = os.path.join(PROJECT_ROOT, "biomarker_data")
 os.makedirs(LOCAL_BIOMARKER_DIR, exist_ok=True)
 
-MODEL_DIR = os.path.join(os.path.dirname(__file__), "models")
+MODEL_DIR = os.path.join(PROJECT_ROOT, "models")
 predictor = LiveBiomarkerPredictor(MODEL_DIR)
 
 app = Flask(__name__)

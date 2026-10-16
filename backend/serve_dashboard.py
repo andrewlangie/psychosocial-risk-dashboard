@@ -9,7 +9,8 @@ from urllib.parse import urlparse
 
 from live_dashboard_backend import LiveDashboardBridge
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent  # project root (backend/ is one level down)
+FRONTEND = ROOT / 'frontend'
 PORT = 8000
 LIVE_STREAM_URL = 'http://127.0.0.1:7000/latest'
 
@@ -19,7 +20,7 @@ bridge.start()
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=str(ROOT), **kwargs)
+        super().__init__(*args, directory=str(FRONTEND), **kwargs)  # only frontend/ is public
 
     def do_GET(self):
         parsed = urlparse(self.path)

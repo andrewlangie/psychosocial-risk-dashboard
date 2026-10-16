@@ -567,7 +567,7 @@ def coach_speak(text, tone, lang, dry_run, engine_holder, rate=175):
     speak_isolated(text, rate)
 
 
-COACH_LOG_PATH = Path(__file__).with_name("voice_alert_log.csv")
+COACH_LOG_PATH = Path(__file__).resolve().parent.parent / "voice_alert_log.csv"
 
 
 def log_alert(sample, key, ctx, text):
