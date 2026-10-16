@@ -23,6 +23,7 @@ feature branch and merges into `main` through a pull request (see [Team workflow
 | **ML models** – Frustration and Mental Demand (Low / Medium / High) from EDA + temperature + minute index | `models/`, `train_biomarker_models.py` | Working (see [Model notes](#model-notes)) |
 | **Supervisor dashboard** – historical sessions + a live worker, auto-refresh every 5 s | `serve_dashboard.py`, `live_dashboard_backend.py`, `psychosocial_dashboard*.html` | Working |
 | **Polar H10 panel** – connects to a Polar H10 chest strap from the browser and shows the EXG 200 ms RMS signal | `sensor/`, `assets/polar-panel.js` | Working (Chrome / Edge) |
+| **Polar fatigue + posture coach** – speaks fatigue feedback (HR, RMSSD, SDNN vs. a personal baseline) and posture feedback (forward/side bend, static posture) from a Polar H10 | `backend/polar_coach.py` and friends | New (rule-based) |
 | **Voice coach** – speaks feedback to the worker: label announcements, or escalating stress / break / heat / heart-rate alerts | `speak_biomarker_labels.py` | Working |
 
 ---
@@ -122,6 +123,45 @@ Coach messages, thresholds and cooldowns are in `COACH_MESSAGES` / `COACH_CONFIG
 
 ---
 
+## Polar H10 fatigue + posture coach
+
+Speaks fatigue feedback (from heart rate + HRV) and posture feedback (from the chest
+accelerometer), using the team's Feedback System sheets.
+
+```bash
+pip install -r requirements-polar.txt
+python backend/polar_coach.py --simulate --dry-run --speed 0   # instant text-only test
+python backend/polar_coach.py --simulate                       # hear a 50-minute shift in ~50 s
+python backend/polar_reader.py --print                         # check the strap works
+python backend/polar_reader.py --record recordings/session1    # record a session
+python backend/polar_coach.py --replay recordings/session1     # replay it through the coach
+python backend/polar_coach.py                                  # live strap
+```
+
+Only one app can connect to the H10 at a time: close the browser Polar panel and the
+Polar Beat app first. Stand upright for the first 10 seconds (posture calibration) and
+work normally for the first ~4 minutes (fatigue baseline) -- nothing is spoken until then.
+
+| File | What it does |
+|---|---|
+| `backend/polar_reader.py` | Bluetooth: heart rate, RR intervals, accelerometer; `--record` saves CSVs |
+| `backend/hrv.py` | Cleans RR intervals, computes HR, RMSSD, SDNN over 60 s |
+| `backend/posture_math.py` | Gravity filter, calibration, forward/side bend angles, movement |
+| `backend/fatigue_rules.py` | Fatigue thresholds, cause patterns and messages (from the sheets) |
+| `backend/posture_rules.py` | Posture thresholds and messages (from the sheets) |
+| `backend/feedback_engine.py` | Baseline -> level -> cause -> duration gate -> Decision |
+| `backend/polar_simulator.py` | Fake 50-minute shift for testing without the strap |
+| `backend/polar_coach.py` | Runs it all, speaks one message at a time, logs `polar_alert_log.csv` |
+| `backend/speech_lock.py` | Stops the Polar coach and the stress coach talking at the same time |
+
+Values not given in the sheets are marked `TEAM-DECISION` in the rule files.
+Twisting, overhead work and asymmetric lifting have messages but are not detected:
+a chest accelerometer cannot see them (they need a gyroscope or an arm sensor).
+
+Tests: `python -m unittest discover -s tests -v`
+
+---
+
 ## Repository layout
 
 Run every script from the project root, e.g. `python backend/serve_dashboard.py`.
@@ -135,6 +175,9 @@ backend/                        Python
   live_dashboard_backend.py       Merges the live worker into the dashboard data
   build_dashboard.py              Original generator for the historical dashboard data/page
   speak_biomarker_labels.py       Voice coach
+  polar_*.py, hrv.py, posture_math.py, *_rules.py, feedback_engine.py, speech_lock.py
+                                  Polar H10 fatigue + posture coach (see above)
+tests/                          Unit tests: python -m unittest discover -s tests -v
 frontend/                       The only folder the server publishes
   psychosocial_dashboard.html     Dashboard (current)   psychosocial_dashboard_v2.html (variant)
   sensor/  assets/                Polar H10 panel (source / built bundle)
@@ -194,7 +237,7 @@ biomarker_data/                 Downloaded wristband CSVs (participant data)
 | Item | Owner | Branch |
 |---|---|---|
 | Restructure into `backend/` (Python) and `frontend/` (pages); server only publishes `frontend/` | Polar / fatigue team | done (`restructure-backend-frontend`) |
-| Polar H10 fatigue (HR, RMSSD, SDNN) and posture (accelerometer angles) voice feedback | Polar / fatigue team | `feature/polar-fatigue-posture` |
+| Polar H10 fatigue (HR, RMSSD, SDNN) and posture (accelerometer angles) voice feedback | Polar / fatigue team | `feature/fatigue-posture` (PR open) |
 | Microsoft Edge neural TTS voices | Dean | `dean_tts` (work in progress) |
 | Cause-aware stress / frustration decision engine (Level 1–4), worker phone page | Stress / frustration team | to be ported |
 | Dashboard panel for fatigue and posture | — | planned |
