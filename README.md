@@ -254,10 +254,10 @@ biomarker_data/                 Downloaded wristband CSVs (participant data)
 | Item | Owner | Branch |
 |---|---|---|
 | Restructure into `backend/` (Python) and `frontend/` (pages); server only publishes `frontend/` | Polar / fatigue team | done (`restructure-backend-frontend`) |
-| Polar H10 fatigue (HR, RMSSD, SDNN) and posture (accelerometer angles) voice feedback | Polar / fatigue team | `feature/fatigue-posture` (PR open) |
+| Polar H10 fatigue (HR, RMSSD, SDNN) and posture (accelerometer angles) voice feedback | Polar / fatigue team | done (`feature/fatigue-posture`) |
 | Microsoft Edge neural TTS voices | Dean | `dean_tts` (work in progress) |
 | Cause-aware stress / frustration decision engine (Level 1–4), worker phone page | Stress / frustration team | to be ported |
-| Dashboard panel for fatigue and posture | Polar / fatigue team | `feature/fatigue-posture-dashboard` (PR open) |
+| Dashboard panel for fatigue and posture | Polar / fatigue team | done (`feature/fatigue-posture-dashboard`) |
 
 ---
 
