@@ -8,6 +8,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from live_dashboard_backend import LiveDashboardBridge
+from polar_status import read_status
 
 ROOT = Path(__file__).resolve().parent.parent  # project root (backend/ is one level down)
 FRONTEND = ROOT / 'frontend'
@@ -35,6 +36,9 @@ class Handler(SimpleHTTPRequestHandler):
                 'liveStatus': data.get('liveStatus', {}),
                 'liveLatestSample': data.get('liveLatestSample'),
             })
+
+        if path == '/api/polar-status':  # fatigue + posture from backend/polar_coach.py
+            return self._send_json(read_status())
 
         if path == '/':
             self.path = '/psychosocial_dashboard.html'

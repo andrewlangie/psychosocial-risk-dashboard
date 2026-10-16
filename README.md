@@ -154,6 +154,22 @@ work normally for the first ~4 minutes (fatigue baseline) -- nothing is spoken u
 | `backend/polar_coach.py` | Runs it all, speaks one message at a time, logs `polar_alert_log.csv` |
 | `backend/speech_lock.py` | Stops the Polar coach and the stress coach talking at the same time |
 
+### Fatigue + posture on the dashboard
+
+Run the coach and the dashboard side by side; the **Fatigue & posture (Polar H10)** panel
+updates every 5 s:
+
+```bash
+python backend/polar_coach.py --simulate      # or live: python backend/polar_coach.py
+python backend/serve_dashboard.py             # second terminal
+```
+
+The coach writes `polar_status.json` (git-ignored) every 5 s; the server returns it at
+`GET /api/polar-status`; `frontend/assets/polar-coach-panel.js` shows the current fatigue
+and posture level, the last spoken message, and 10-minute trends. Without the coach running
+the panel says so; if updates stop for 15 s it shows "not updating". Use `--no-dashboard`
+to turn the status file off.
+
 Values not given in the sheets are marked `TEAM-DECISION` in the rule files.
 Twisting, overhead work and asymmetric lifting have messages but are not detected:
 a chest accelerometer cannot see them (they need a gyroscope or an arm sensor).
@@ -181,6 +197,7 @@ tests/                          Unit tests: python -m unittest discover -s tests
 frontend/                       The only folder the server publishes
   psychosocial_dashboard.html     Dashboard (current)   psychosocial_dashboard_v2.html (variant)
   sensor/  assets/                Polar H10 panel (source / built bundle)
+  assets/polar-coach-panel.js     Fatigue + posture panel (reads /api/polar-status)
 models/                         frustration_model.joblib, mental_demand_model.joblib, model_metadata.json
 dashboard_data.json             Historical example sessions (16 MB)
 biomarker_data/                 Downloaded wristband CSVs (participant data)
@@ -240,7 +257,7 @@ biomarker_data/                 Downloaded wristband CSVs (participant data)
 | Polar H10 fatigue (HR, RMSSD, SDNN) and posture (accelerometer angles) voice feedback | Polar / fatigue team | `feature/fatigue-posture` (PR open) |
 | Microsoft Edge neural TTS voices | Dean | `dean_tts` (work in progress) |
 | Cause-aware stress / frustration decision engine (Level 1–4), worker phone page | Stress / frustration team | to be ported |
-| Dashboard panel for fatigue and posture | — | planned |
+| Dashboard panel for fatigue and posture | Polar / fatigue team | `feature/fatigue-posture-dashboard` (PR open) |
 
 ---
 

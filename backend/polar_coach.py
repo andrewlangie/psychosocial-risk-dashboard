@@ -17,6 +17,7 @@ from datetime import datetime
 from pathlib import Path
 
 from feedback_engine import FatigueEngine, PostureEngine, choose_primary
+from polar_status import StatusWriter
 from speak_biomarker_labels import coach_speak
 from speech_lock import speaking
 
@@ -77,7 +78,7 @@ def status_line(minute, fs, ps):
     return f"  min {minute:>3}  {f} | {p}"
 
 
-def run(events, speed, dry_run):
+def run(events, speed, dry_run, status=None):
     fatigue, posture = FatigueEngine(), PostureEngine()
     start = next_eval = None
     last_spoken = next_status = -1e9
@@ -101,6 +102,8 @@ def run(events, speed, dry_run):
 
         decisions = [fatigue.evaluate(t), posture.evaluate(t)]
         minute = int((t - start) // 60)
+        if status:  # share the live state with the dashboard (polar_status.py)
+            status.update((t - start) / 60, fatigue.state, posture.state)
         if t >= next_status:
             print(status_line(minute, fatigue.state, posture.state))
             next_status = t + STATUS_EVERY_S
@@ -113,6 +116,8 @@ def run(events, speed, dry_run):
         with speaking():
             coach_speak(d.message, "firm" if d.urgency >= 3 else "calm", "en", dry_run, {})
         log_decision(d, fatigue.state, posture.state)
+        if status:
+            status.spoken(d, (t - start) / 60)
 
 
 def main():
@@ -123,18 +128,21 @@ def main():
     p.add_argument("--speed", type=float, default=60,
                    help="simulate/replay: sensor seconds per real second (0 = as fast as possible)")
     p.add_argument("--dry-run", action="store_true", help="print messages instead of speaking")
+    p.add_argument("--no-dashboard", action="store_true",
+                   help="don't write polar_status.json for the dashboard panel")
     args = p.parse_args()
 
     if args.simulate:
         from polar_simulator import simulated_events
-        events, speed = simulated_events(), args.speed
+        events, speed, source = simulated_events(), args.speed, "simulation"
     elif args.replay:
-        events, speed = replay_events(args.replay), args.speed
+        events, speed, source = replay_events(args.replay), args.speed, "replay"
     else:
         from polar_reader import live_events
-        events, speed = live_events(), 0  # live data arrives in real time already
+        events, speed, source = live_events(), 0, "live"  # live data arrives in real time already
+    status = None if args.no_dashboard else StatusWriter(source=source)
     try:
-        run(events, speed, args.dry_run)
+        run(events, speed, args.dry_run, status)
     except KeyboardInterrupt:
         print("\nStopped.")
 
